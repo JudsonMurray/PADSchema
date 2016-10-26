@@ -1,1 +1,9 @@
-Monster 1340 and 1341 are absent
+Absent Monsters
+
+- 1340
+- 1341
+- 1708
+- 1892
+- 1893
+- 1894
+- 1895
