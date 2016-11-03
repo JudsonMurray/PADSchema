@@ -5,27 +5,33 @@
 #   DATE:    10/29/2016
 #   PURPOSE: Implementation for Screen Scraping Monster Class Info
 
-
 #   v0.1:   10/29/2016 (JBM) - Initial Version. Scraping Base Attributes of Monsters
+#   v0.2:   11/02/2016 (JBM) - Adding functionality to scrape Active / Leader Skill
+#                            - Fixed ' ' Injection for Scripts (sep='')
+#   v0.3:   11/03/2016 (JBM) - Added Overall Execution Time stats and Exit Key Function
+
+#   TODO LIST:
+#
+#   - FIX MEMORY UTILIZATION (SOUPSTRAINER MAY WORK)
+#   - OUTPUT TO CSV / XLSX FILE (FIXED FILE NAME & LOCATION)
+#   - FIX ROW FORMATTING FOR:   MONSTER BASE ATTRIBUTE SPACING & ACTIVE/LEADER SKILL SCRAPING
+#   - ADD TIMING TO FIND RUNTIME FOR SCRIPT (TO UNDERSTAND TIME ASSOCIATED WITH SCRAPING)       - (DONE!)
+#   - PRESS 'Q' TO QUIT (AS OPPOSED TO KEYBOARD MASHING THAT OCCURS NOW - PROTECTS RUN STATS)   - (DONE!)
+#   - ADD UNICODE/PAGE SUPPORT FOR JAPANESE CHARACTERS, AND REMOVE THE 'UNPRINTABLE' MESSAGE
+#   - FIX EXCEPTION REMOVES AT START, AND CLARIFY MESSAGES ('THESE WERE OMITTED, THESE WERE NOT IN THE RANGE, ETC')
 #   ------------------------------------------------------------------------------------------
+
 from urllib.request import urlopen
-#import html5lib
-
-#with urlopen("http://www.puzzledragonx.com/en/monster.asp?n=2998") as f:
-#    document = html5lib.parse(f, transport_encoding=f.info().get_content_charset())
-
 from bs4 import BeautifulSoup
+#------
+import string
 
-#page = urllib.request.urlopen('http://www.puzzledragonx.com/en/monster.asp?n=148')
+def ScrapeBaseInfo(url):
 
-def ScrapeInfo(url):
-#try:
-    #page = urlopen('http://www.puzzledragonx.com/en/monster.asp?n=148')
     page = urlopen(url)
     pageContent = page.read()
 
     soup = BeautifulSoup(pageContent, 'html5lib')
-
 
     #results = soup.find_all('compareprofile')
     #yes = soup.body.div
@@ -41,7 +47,6 @@ def ScrapeInfo(url):
     #sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     #sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
-    import string
     inputTags = soup.find_all(attrs={"class": "data"})
 
     #for i in inputTags:
@@ -70,23 +75,23 @@ def ScrapeInfo(url):
             for j in i.children:
                 if not isinstance(j,str):
                     for k in j:
-                        print(k,separator,end="")
+                        print(k,separator,end="",sep='')
                         retList.append(k)
                 else:
                     if set(j).issubset(printset):
-                        print(j,separator,end="")
+                        print(j,separator,end="",sep='')
                     else:
-                        print("UNPRINTABLE",separator,end="")
+                        print("UNPRINTABLE",separator,end="",sep='')
 
                 #print("->",str(j))
                     #print(j,separator,end="")
                     retList.append(j)
         else:
-            print(separator,end="")#print("Skipping - JAPANESE Characters")
+            print(separator,end="",sep='')#print("Skipping - JAPANESE Characters")
 
     print()
     soup.decompose()
-#    page.decompose()
+
     return retList
 
 #except as e:
@@ -113,12 +118,6 @@ def ScrapeInfo(url):
     #        else:
     #            print("UNPRINTABLE")
     #        #print("->",str(j))
-
-
-
-
-
-
 
 
 
@@ -206,38 +205,156 @@ def ScrapeInfo(url):
 
 
 
+
+def ScrapeSkillInfo(url):
+
+    page = urlopen(url)
+    pageContent = page.read()
+
+    soup = BeautifulSoup(pageContent, 'html5lib')
+
+    #inputTags = soup.find_all(attrs={"class": "ptitle"})   #--These are the kids!
+    #inputTags = soup.find_all(attrs={"id": "compareprofile"}) 
+
+    inputTags = soup.find_all(attrs={"class": "blue"})
+
+    #for i in inputTags:
+    ##    print("Contents Type:",type(i.contents))
+    ##    print("Contents Length:", len(i.contents))
+    ##    print("Contents [0] Type:",type(i.contents[0]))
+    ##    print("Class:",i.attrs)
+    ##    print(type(i.attrs))
+    #    if "jap" not in i.attrs.get("class"):
+    #        print("North America")
+    #    else:
+    #        print("JAP!")
+    #print()
+
+    separator = '|'
+    print("Total Attributes: ",len(inputTags),separator,end="",sep='')
+
+    retList = []
+
+    printset = set(string.printable)
+
+    for i in inputTags:
+
+        if "jap" not in i.attrs.get("class"):
+        
+            for j in i.children:
+                if not isinstance(j,str):
+                    for k in j:
+                        print(k,separator,end="",sep='')
+                        retList.append(k)
+                else:
+                    if set(j).issubset(printset):
+                        print(j,separator,end="",sep='')
+                    else:
+                        print("UNPRINTABLE",separator,end="",sep='')
+
+                #print("->",str(j))
+                    #print(j,separator,end="")
+                    retList.append(j)
+        else:
+            print(separator,end="",sep='')#print("Skipping - JAPANESE Characters")
+
+    inputTags = soup.find_all(attrs={"class" : "green"})
+    for i in inputTags:
+
+        if "jap" not in i.attrs.get("class"):
+        
+            for j in i.children:
+                if not isinstance(j,str):
+                    for k in j:
+                        print(k,separator,end="",sep='')
+                        retList.append(k)
+                else:
+                    if set(j).issubset(printset):
+                        print(j,separator,end="",sep='')
+                    else:
+                        print("UNPRINTABLE",separator,end="",sep='')
+
+                #print("->",str(j))
+                    #print(j,separator,end="")
+                    retList.append(j)
+        else:
+            print(separator,end="",sep='')#print("Skipping - JAPANESE Characters")
+
+    print()
+    soup.decompose()
+
+    return retList
+
+#------------------------------------------------------------------------------------------
+#   MAIN FUNCTION - IMPLEMENTATION
+
+import datetime
+
 try:
 
-    #monsterList = list(range(1931,3252+1))
-    #ex = [  1340,1341,1708,1892,1893,1894,1895,2573,2897,2898,
-    #        3188,3189,3190,3191,3192,3193,3194,3207,3208,3209,
-    #        3211,3212,3214,3216,3244,3245,3248]
+    startingID = input("Starting ID:\t")
+    
+    assert(int(startingID) and int(startingID) < 3268)
+    startingID = int(startingID)
+
+    totalAmt =  input("How Many:\t")
+    if totalAmt is "":
+        totalAmt = (3268 - startingID)
+    assert(int(totalAmt) and int(totalAmt)+startingID <= 3268)
+    
+    totalAmt = int(totalAmt)
+
+    startTime = datetime.datetime.now()  #Start Time for Script
+    print()
+    print('Start Time:',startTime.time(),'\n')
+
+    monsterList = list(range(startingID,totalAmt+startingID+1))
+    ex = [  1340,1341,1708,1892,1893,1894,1895,2573,2897,2898,
+            3188,3189,3190,3191,3192,3193,3194,3207,3208,
+            3211,3216,3260,3261,3262,3263,3264,3265,3266]
 
 
-    #for i in ex:
-    #    try:
-    #        monsterList.remove(i)
-    #    except ValueError as v:
-    #        print(i," - Not in the List!")
+    omitList = []
+    for i in ex:
+        try:
+            monsterList.remove(i)
+        except ValueError as v:
+            #print(i," - Not in the List!")
+            omitList.append(i)
 
-    monsterList = [3209,3212,3214,3244,3245,3248,3253,3254,3255,3256,3257,3258,3259,3267,3268]
-    print("Size of list:",len(monsterList))
+    if len(omitList):
+        print("Omitted the following values: ",omitList)
+
+    #monsterList = [3209,3212,3214,3244,3245,3248,3253,3254,3255,3256,3257,3258,3259,3267,3268]
+
+    print("Size of list:",len(monsterList),'\n')
 
     baseURL = 'http://www.puzzledragonx.com/en/monster.asp?n='
     totalList = dict()
 
-
-
-    for i in monsterList:#range(1,100):
+    for i in monsterList:
         print(i,'|',end="")
-        newItem = ScrapeInfo(baseURL+str(i))
+        newItem = ScrapeSkillInfo(baseURL+str(i))
         totalList[i] = newItem
 
-    print(totalList)
+    #print(totalList)   - Trying to print unencodeable characters (FIX WITH UNICODE SUPPORT) TODO: FIX IT!
+    
+except AssertionError as a:
+    
+    print("Sorry, please select a valid value!")
 
 except Exception as e:
     
-    print("Caught the following: ",e)    
+    print("Caught the following: ",e)
 
-    input()
+    
+stopTime = datetime.datetime.now()  #Start Time for Script  
+print()
+print('End Time:',stopTime.time())
+print("Total Execution Time: ",stopTime - startTime,'\n')
 
+
+print(r"Press 'q' or 'Q' to continue")
+ui = ''
+while ui != 'q' and ui != 'Q':
+    ui = input()
